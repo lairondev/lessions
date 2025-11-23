@@ -1,0 +1,114 @@
+name: 🚀 Deploy Lessions API
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: "📥 Checkout do código"
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: "🔑 Configurar SSH"
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CMB_SSH_KEY }}" > ~/.ssh/deployer_key
+          chmod 600 ~/.ssh/deployer_key
+          ssh-keyscan -p 3005 170.80.234.117 >> ~/.ssh/known_hosts
+          
+      - name: "🔓 Preparar permissões no servidor"
+        run: |
+          echo "🔓 Preparando permissões..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            # Dar controle total ao deployer temporariamente
+            sudo chown -R deployer:deployer /var/www/apis/lessions/
+            sudo chmod -R 755 /var/www/apis/lessions/
+            echo '✅ Permissões liberadas para deployer'
+          "
+          
+      - name: "📤 Sincronizar código"
+        run: |
+          echo "🔄 Sincronizando código..."
+          rsync -avz --delete \
+            --no-perms \
+            --no-owner \
+            --no-group \
+            --no-times \
+            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005" \
+            --exclude 'venv/' \
+            --exclude '__pycache__/' \
+            --exclude '*.pyc' \
+            --exclude '.env' \
+            --exclude '.git/' \
+            --exclude '*.swp' \
+            ./ deployer@170.80.234.117:/var/www/apis/lessions/
+          echo "✅ Código sincronizado com sucesso!"
+          
+      - name: "🔒 Restaurar permissões de produção"
+        run: |
+          echo "🔒 Restaurando permissões de produção..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            # Restaurar dono para www-data
+            sudo chown -R www-data:www-data /var/www/apis/cmb-api/
+            
+            # Permissões padrão seguras para produção
+            sudo find /var/www/apis/lessions -type f -exec chmod 644 {} \;
+            sudo find /var/www/apis/lessions -type d -exec chmod 755 {} \;
+            
+            echo '✅ Permissões de produção restauradas'
+          "
+          
+      - name: "📦 Instalar/atualizar dependências"
+        run: |
+          echo "📦 Verificando dependências..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            cd /var/www/apis/lessions
+            source venv/bin/activate
+            pip install -r requirements.txt
+            echo '✅ Dependências verificadas!'
+          "
+          
+      - name: "🔄 Executar migrações do banco"
+        run: |
+          echo "🔄 Executando migrações..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            cd /var/www/apis/lessions
+            source venv/bin/activate
+            alembic upgrade head
+            echo '✅ Migrações aplicadas!'
+          "
+          
+      - name: "⚡ Reiniciar serviço"
+        run: |
+          echo "⚡ Reiniciando serviço..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            sudo systemctl restart lessions.service
+            echo '✅ Serviço reiniciado!'
+          "
+
+      - name: "✅ Verificação final"
+        run: |
+          echo "✅ Verificando deploy..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            # Verificar se serviço está rodando
+            if systemctl is-active lessions.service; then
+              echo '🎉 Serviço: ATIVO'
+              
+              # Verificar conteúdo do app.py
+              echo '📄 Conteúdo do app.py (últimas linhas):'
+              tail -5 /var/www/apis/cmb-api/app.py
+              
+              # Testar API
+              echo '🌐 Testando API...'
+              curl -s http://localhost:5001/ || echo 'API não respondeu'
+            else
+              echo '❌ Serviço não está rodando'
+              systemctl status lessions.service
+              exit 1
+            fi
+          "
