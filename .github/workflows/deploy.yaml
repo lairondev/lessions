@@ -17,7 +17,7 @@ jobs:
       - name: "🔑 Configurar SSH"
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.CMB_SSH_KEY }}" > ~/.ssh/deployer_key
+          echo "${{ secrets.LESSIONS_SSH_KEY }}" > ~/.ssh/deployer_key
           chmod 600 ~/.ssh/deployer_key
           ssh-keyscan -p 3005 170.80.234.117 >> ~/.ssh/known_hosts
           
