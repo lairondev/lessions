@@ -54,7 +54,7 @@ jobs:
           echo "🔒 Restaurando permissões de produção..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
             # Restaurar dono para www-data
-            sudo chown -R www-data:www-data /var/www/apis/cmb-api/
+            sudo chown -R www-data:www-data /var/www/apis/lessions/
             
             # Permissões padrão seguras para produção
             sudo find /var/www/apis/lessions -type f -exec chmod 644 {} \;
@@ -101,7 +101,7 @@ jobs:
               
               # Verificar conteúdo do app.py
               echo '📄 Conteúdo do app.py (últimas linhas):'
-              tail -5 /var/www/apis/cmb-api/app.py
+              tail -5 /var/www/apis/lessions/app.py
               
               # Testar API
               echo '🌐 Testando API...'
