@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    name = 'Lairon Souza'
+    name = 'Lairon Souza.'
     age = 32
 
     user_data = {
