@@ -30,7 +30,23 @@ jobs:
             sudo chmod -R 755 /var/www/apis/lessions/
             echo '✅ Permissões liberadas para deployer'
           "
-          
+      
+
+      - name: "🔍 DEBUG - Lessions API"
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            echo '=== DEBUG LESSIONS ==='
+            echo '1. Dono da pasta:'
+            ls -ld /var/www/apis/lessions
+            echo '2. Teste de escrita:'
+            touch /var/www/apis/lessions/teste_lessions.txt && echo '✅ LESSIONS: Pode escrever' || echo '❌ LESSIONS: NÃO pode escrever'
+            echo '3. Permissões:'
+            ls -la /var/www/apis/lessions/ | head -3
+            echo '=== FIM DEBUG LESSIONS ==='
+          "
+
+
+
       - name: "📤 Sincronizar código"
         run: |
           echo "🔄 Sincronizando código..."
