@@ -46,24 +46,32 @@ jobs:
           "
 
 
-
-      - name: "📤 Sincronizar código"
+      - name: "📤 Sincronizar código via TAR"
         run: |
-          echo "🔄 Sincronizando código..."
-          rsync -avz --delete \
-            --no-perms \
-            --no-owner \
-            --no-group \
-            --no-times \
-            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005" \
-            --exclude 'venv/' \
-            --exclude '__pycache__/' \
-            --exclude '*.pyc' \
-            --exclude '.env' \
-            --exclude '.git/' \
-            --exclude '*.swp' \
-            ./ deployer@170.80.234.117:/var/www/apis/lessions/
-          echo "✅ Código sincronizado com sucesso!"
+          echo "🔄 Enviando código via TAR..."
+          tar -czf - --exclude='venv' --exclude='.git' --exclude='.env' --exclude='__pycache__' . | 
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
+            cd /var/www/apis/lessions
+            sudo -u deployer tar -xzf -
+            echo '✅ Código extraído via TAR'
+          "
+      # - name: "📤 Sincronizar código"
+      #   run: |
+      #     echo "🔄 Sincronizando código..."
+      #     rsync -avz --delete \
+      #       --no-perms \
+      #       --no-owner \
+      #       --no-group \
+      #       --no-times \
+      #       -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005" \
+      #       --exclude 'venv/' \
+      #       --exclude '__pycache__/' \
+      #       --exclude '*.pyc' \
+      #       --exclude '.env' \
+      #       --exclude '.git/' \
+      #       --exclude '*.swp' \
+      #       ./ deployer@170.80.234.117:/var/www/apis/lessions/
+      #     echo "✅ Código sincronizado com sucesso!"
           
       - name: "🔒 Restaurar permissões de produção"
         run: |
