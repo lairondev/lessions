@@ -27,7 +27,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deployer_key -p 3005 deployer@170.80.234.117 "
             # Dar controle total ao deployer temporariamente
             sudo chown -R deployer:deployer /var/www/apis/lessions/
-            sudo chmod -R 755 /var/www/apis/lessions/
+            sudo chmod -R 775 /var/www/apis/lessions/
             echo '✅ Permissões liberadas para deployer'
           "
       
@@ -74,7 +74,7 @@ jobs:
             
             # Permissões padrão seguras para produção
             sudo find /var/www/apis/lessions -type f -exec chmod 644 {} \;
-            sudo find /var/www/apis/lessions -type d -exec chmod 755 {} \;
+            sudo find /var/www/apis/lessions -type d -exec chmod 775 {} \;
             
             echo '✅ Permissões de produção restauradas'
           "
